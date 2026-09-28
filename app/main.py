@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from .schemas import MatchRequest, MatchResult
+from .llm import get_match_result
 
 
 app = FastAPI()
@@ -10,9 +11,8 @@ def health():
 
 @app.post("/match", response_model=MatchResult)
 def match(request:MatchRequest):
-	return MatchResult(
-		match_score=50,
-        matched_skills=["example"],
-        missing_skills=["example"],
-        suggested_edits=["example one", "example two"],
-	)
+	try:
+		return get_match_result(request.resume_text, request.job_description)
+	except Exception as e:
+		print("ACTUAL ERROR:", repr(e))
+		raise HTTPException(status_code=502, detail="Failed to get match result from AI service") from e
